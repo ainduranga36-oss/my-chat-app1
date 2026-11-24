@@ -69,6 +69,7 @@
     const firebaseConfig = {
       apiKey: "AIzaSyBPVxkpgjH0lU8p2lITGPa6qBdDqYDxOas",
       authDomain: "my-whatsapp-clone-5d734.firebaseapp.com",
+      databaseURL: "https://my-whatsapp-clone-5d734-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "my-whatsapp-clone-5d734",
       storageBucket: "my-whatsapp-clone-5d734.firebasestorage.app",
       messagingSenderId: "517004696512",
@@ -90,7 +91,6 @@
     let currentUser = null;
     let initialLoaded = false;
 
-    // Request browser/webview notification permission when possible
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission().catch(() => {});
     }
@@ -143,7 +143,6 @@
       messagesList.innerHTML = "";
       initialLoaded = false;
 
-      // Mark initial existing messages loaded after a short delay
       setTimeout(() => { initialLoaded = true; }, 1200);
 
       onChildAdded(msgsRef, (snapshot) => {
@@ -163,7 +162,6 @@
         messagesList.appendChild(div);
         messagesList.scrollTop = messagesList.scrollHeight;
 
-        // Show notification for new incoming messages
         if (!isMe && initialLoaded) {
           showAlertNotification(data.sender || "New Message", data.text || "");
         }
@@ -196,24 +194,12 @@
       const text = msgInput.value.trim();
       if (!text || !currentUser) return;
       msgInput.value = "";
-      await push(ref(db, "messages"), {
-        uid: currentUser.uid,
-        sender: currentUser.displayName || currentUser.email,
-        text,
-        time: Date.now()
-      });
-    }
-
-    document.getElementById("sendBtn").addEventListener("click", sendMessage);
-    msgInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") sendMessage();
-    });
-
-    function escapeHtml(str) {
-      return str.replace(/[&<>"']/g, (m) => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-      }[m]));
-    }
-  </script>
-</body>
-</html>
+      try {
+        await push(ref(db, "messages"), {
+          uid: currentUser.uid,
+          sender: currentUser.displayName || currentUser.email,
+          text,
+          time: Date.now()
+        });
+      } catch (e) {
+        alert("Error: " + e.message);
